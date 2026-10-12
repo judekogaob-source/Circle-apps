@@ -1,0 +1,42 @@
+
+name: Build Circle APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'circle_android_project.zip'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Extract project
+        run: unzip -o circle_android_project.zip
+
+      - name: Build APK
+        working-directory: circle_android_project
+        run: |
+          npm install
+          npx cap add android
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Circle-Android-APK
+          path: circle_android_project/android/app/build/outputs/apk/debug/app-debug.apk
